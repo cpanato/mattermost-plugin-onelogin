@@ -1,4 +1,4 @@
-# OneLogin Notification
+# OneLogin Notification [![CircleCI](https://circleci.com/gh/cpanato/mattermost-plugin-onelogin.svg?style=svg)](https://circleci.com/gh/cpanato/mattermost-plugin-onelogin)
 
 This plugin receive and post notifications from OneLogin Webhook
 
