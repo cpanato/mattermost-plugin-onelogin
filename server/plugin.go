@@ -95,7 +95,7 @@ func (p *Plugin) ServeHTTP(c *plugin.Context, w http.ResponseWriter, r *http.Req
 	for _, event := range oneLoginEvents {
 		risk, _ := strconv.Atoi(p.configuration.RiskThreshold)
 		if event.EventTypeID == 5 && event.RiskScore > risk {
-			p.handleLoginPossibleTreat(event)
+			p.handleLoginPossibleThreat(event)
 		} else {
 			p.API.LogInfo("Not implemented yet")
 		}
@@ -113,7 +113,7 @@ func (p *Plugin) checkHeaderToken(r *http.Request) error {
 	return nil
 }
 
-func (p *Plugin) handleLoginPossibleTreat(event OneLogin) {
+func (p *Plugin) handleLoginPossibleThreat(event OneLogin) {
 	var fields []*model.SlackAttachmentField
 	fields = addFields(fields, "Risk Score", strconv.Itoa(event.RiskScore), false)
 	fields = addFields(fields, "Risk Reasons", event.RiskReasons, false)
