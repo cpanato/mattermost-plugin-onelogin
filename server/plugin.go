@@ -94,8 +94,20 @@ func (p *Plugin) ServeHTTP(c *plugin.Context, w http.ResponseWriter, r *http.Req
 
 	for _, event := range oneLoginEvents {
 		risk, _ := strconv.Atoi(p.configuration.RiskThreshold)
-		if event.EventTypeID == 5 && event.RiskScore > risk {
+		if event.EventTypeID == 5 && event.RiskScore > risk { // USER_LOGGED_INTO_ONELOGIN
 			p.handleLoginPossibleThreat(event)
+		} else if event.EventTypeID == 12 { // UNLOCKED_USER
+			p.handleLoginUserUnlocked(event)
+		} else if event.EventTypeID == 13 { // CREATED_USER
+			p.handleLoginUserCreation(event)
+		} else if event.EventTypeID == 15 { // DEACTIVATED_USER
+			p.handleLoginUserDeactived(event)
+		} else if event.EventTypeID == 17 { // DELETED_USER
+			p.handleLoginUserDeleted(event)
+		} else if event.EventTypeID == 19 { // USER_LOCKED
+			p.handleLoginUserLocked(event)
+		} else if event.EventTypeID == 24 { // USER_REMOVED_OTP_DEVICE
+			p.handleLoginUserRemovedOTP(event)
 		} else {
 			p.API.LogInfo("Not implemented yet")
 		}
@@ -126,6 +138,191 @@ func (p *Plugin) handleLoginPossibleThreat(event OneLogin) {
 		Title:  title,
 		Fields: fields,
 		Color:  "#ff0000",
+	}
+
+	post := &model.Post{
+		ChannelId: p.ChannelID,
+		UserId:    p.BotUserID,
+		Props: map[string]interface{}{
+			"from_webhook":      "true",
+			"override_username": ONELOGIN_USERNAME,
+			"override_icon_url": ONELOGIN_ICON_URL,
+		},
+	}
+
+	model.ParseSlackAttachment(post, []*model.SlackAttachment{attachment})
+	if _, appErr := p.API.CreatePost(post); appErr != nil {
+		return
+	}
+	return
+}
+
+func (p *Plugin) handleLoginUserCreation(event OneLogin) {
+	var fields []*model.SlackAttachmentField
+	fields = addFields(fields, "User Name", event.UserName, false)
+	fields = addFields(fields, "Login Name", event.LoginName, false)
+	fields = addFields(fields, "Notes", event.Notes, false)
+
+	title := fmt.Sprintf("%s was created by %s", event.UserName, event.ActorUserName)
+	attachment := &model.SlackAttachment{
+		Title:  title,
+		Fields: fields,
+		Color:  "#008000",
+	}
+
+	post := &model.Post{
+		ChannelId: p.ChannelID,
+		UserId:    p.BotUserID,
+		Props: map[string]interface{}{
+			"from_webhook":      "true",
+			"override_username": ONELOGIN_USERNAME,
+			"override_icon_url": ONELOGIN_ICON_URL,
+		},
+	}
+
+	model.ParseSlackAttachment(post, []*model.SlackAttachment{attachment})
+	if _, appErr := p.API.CreatePost(post); appErr != nil {
+		return
+	}
+	return
+}
+
+func (p *Plugin) handleLoginUserDeactived(event OneLogin) {
+	var fields []*model.SlackAttachmentField
+	fields = addFields(fields, "User Name", event.UserName, false)
+	fields = addFields(fields, "Login Name", event.LoginName, false)
+	fields = addFields(fields, "Notes", event.Notes, false)
+
+	title := fmt.Sprintf("%s was deactived by %s", event.UserName, event.ActorUserName)
+	attachment := &model.SlackAttachment{
+		Title:  title,
+		Fields: fields,
+		Color:  "#0000FF",
+	}
+
+	post := &model.Post{
+		ChannelId: p.ChannelID,
+		UserId:    p.BotUserID,
+		Props: map[string]interface{}{
+			"from_webhook":      "true",
+			"override_username": ONELOGIN_USERNAME,
+			"override_icon_url": ONELOGIN_ICON_URL,
+		},
+	}
+
+	model.ParseSlackAttachment(post, []*model.SlackAttachment{attachment})
+	if _, appErr := p.API.CreatePost(post); appErr != nil {
+		return
+	}
+	return
+}
+
+func (p *Plugin) handleLoginUserDeleted(event OneLogin) {
+	var fields []*model.SlackAttachmentField
+	fields = addFields(fields, "User Name", event.UserName, false)
+	fields = addFields(fields, "Login Name", event.LoginName, false)
+	fields = addFields(fields, "Notes", event.Notes, false)
+
+	title := fmt.Sprintf("%s was deleted by %s", event.UserName, event.ActorUserName)
+	attachment := &model.SlackAttachment{
+		Title:  title,
+		Fields: fields,
+		Color:  "#0000FF",
+	}
+
+	post := &model.Post{
+		ChannelId: p.ChannelID,
+		UserId:    p.BotUserID,
+		Props: map[string]interface{}{
+			"from_webhook":      "true",
+			"override_username": ONELOGIN_USERNAME,
+			"override_icon_url": ONELOGIN_ICON_URL,
+		},
+	}
+
+	model.ParseSlackAttachment(post, []*model.SlackAttachment{attachment})
+	if _, appErr := p.API.CreatePost(post); appErr != nil {
+		return
+	}
+	return
+}
+
+func (p *Plugin) handleLoginUserUnlocked(event OneLogin) {
+	var fields []*model.SlackAttachmentField
+	fields = addFields(fields, "User Name", event.UserName, false)
+	fields = addFields(fields, "Login Name", event.LoginName, false)
+	fields = addFields(fields, "Notes", event.Notes, false)
+	fields = addFields(fields, "User Agent", event.UserAgent, true)
+	fields = addFields(fields, "IP Address", event.Ipaddr, true)
+
+	title := fmt.Sprintf("%s unlocked %s", event.ActorUserName, event.UserName)
+	attachment := &model.SlackAttachment{
+		Title:  title,
+		Fields: fields,
+		Color:  "#008000",
+	}
+
+	post := &model.Post{
+		ChannelId: p.ChannelID,
+		UserId:    p.BotUserID,
+		Props: map[string]interface{}{
+			"from_webhook":      "true",
+			"override_username": ONELOGIN_USERNAME,
+			"override_icon_url": ONELOGIN_ICON_URL,
+		},
+	}
+
+	model.ParseSlackAttachment(post, []*model.SlackAttachment{attachment})
+	if _, appErr := p.API.CreatePost(post); appErr != nil {
+		return
+	}
+	return
+}
+
+func (p *Plugin) handleLoginUserLocked(event OneLogin) {
+	var fields []*model.SlackAttachmentField
+	fields = addFields(fields, "User Name", event.UserName, false)
+	fields = addFields(fields, "Login Name", event.LoginName, false)
+	fields = addFields(fields, "Notes", event.Notes, false)
+	fields = addFields(fields, "User Agent", event.UserAgent, true)
+	fields = addFields(fields, "IP Address", event.Ipaddr, true)
+
+	title := fmt.Sprintf("%s locked", event.UserName)
+	attachment := &model.SlackAttachment{
+		Title:  title,
+		Fields: fields,
+		Color:  "#FFA500",
+	}
+
+	post := &model.Post{
+		ChannelId: p.ChannelID,
+		UserId:    p.BotUserID,
+		Props: map[string]interface{}{
+			"from_webhook":      "true",
+			"override_username": ONELOGIN_USERNAME,
+			"override_icon_url": ONELOGIN_ICON_URL,
+		},
+	}
+
+	model.ParseSlackAttachment(post, []*model.SlackAttachment{attachment})
+	if _, appErr := p.API.CreatePost(post); appErr != nil {
+		return
+	}
+	return
+}
+
+func (p *Plugin) handleLoginUserRemovedOTP(event OneLogin) {
+	var fields []*model.SlackAttachmentField
+	fields = addFields(fields, "User Name", event.UserName, false)
+	fields = addFields(fields, "Notes", event.Notes, false)
+	fields = addFields(fields, "OTP Device Name", event.OtpDeviceName, true)
+	fields = addFields(fields, "OTP Device ID", strconv.Itoa(event.OtpDeviceID), true)
+
+	title := fmt.Sprintf("%s deregistered for %s", event.OtpDeviceName, event.UserName)
+	attachment := &model.SlackAttachment{
+		Title:  title,
+		Fields: fields,
+		Color:  "#FFA500",
 	}
 
 	post := &model.Post{
