@@ -21,6 +21,16 @@ For now it only parses the user login and check the configured risk threshold an
 - Create the webhook and set the Header `X-OneLogin-Token` with the value you created in the Mattermost configuration, see above.
 
 
+#### Events Supported
+
+- `USER_LOGGED_INTO_ONELOGIN`
+- `UNLOCKED_USER`
+- `CREATED_USER`
+- `DEACTIVATED_USER`
+- `DELETED_USER`
+- `USER_LOCKED`
+- `USER_REMOVED_OTP_DEVICE`
+
 
 ## Next features
 
