@@ -109,7 +109,7 @@ func (p *Plugin) ServeHTTP(c *plugin.Context, w http.ResponseWriter, r *http.Req
 		} else if event.EventTypeID == 24 { // USER_REMOVED_OTP_DEVICE
 			p.handleLoginUserRemovedOTP(event)
 		} else {
-			p.API.LogInfo("Not implemented yet")
+			p.API.LogInfo("Not implemented yet", "Event Type", event.EventTypeID)
 		}
 	}
 
@@ -249,10 +249,7 @@ func (p *Plugin) handleLoginUserDeleted(event OneLogin) {
 
 func (p *Plugin) handleLoginUserUnlocked(event OneLogin) {
 	var fields []*model.SlackAttachmentField
-	fields = addFields(fields, "User Name", event.UserName, false)
-	fields = addFields(fields, "Login Name", event.LoginName, false)
-	fields = addFields(fields, "Notes", event.Notes, false)
-	fields = addFields(fields, "User Agent", event.UserAgent, true)
+	fields = addFields(fields, "Login Name", event.LoginName, true)
 	fields = addFields(fields, "IP Address", event.Ipaddr, true)
 
 	title := fmt.Sprintf("%s unlocked %s", event.ActorUserName, event.UserName)
@@ -281,11 +278,9 @@ func (p *Plugin) handleLoginUserUnlocked(event OneLogin) {
 
 func (p *Plugin) handleLoginUserLocked(event OneLogin) {
 	var fields []*model.SlackAttachmentField
-	fields = addFields(fields, "User Name", event.UserName, false)
-	fields = addFields(fields, "Login Name", event.LoginName, false)
-	fields = addFields(fields, "Notes", event.Notes, false)
-	fields = addFields(fields, "User Agent", event.UserAgent, true)
+	fields = addFields(fields, "Login Name", event.LoginName, true)
 	fields = addFields(fields, "IP Address", event.Ipaddr, true)
+	fields = addFields(fields, "Notes", event.Notes, false)
 
 	title := fmt.Sprintf("%s locked", event.UserName)
 	attachment := &model.SlackAttachment{
