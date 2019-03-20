@@ -108,6 +108,8 @@ func (p *Plugin) ServeHTTP(c *plugin.Context, w http.ResponseWriter, r *http.Req
 			p.handleLoginUserLocked(event)
 		} else if event.EventTypeID == 24 { // USER_REMOVED_OTP_DEVICE
 			p.handleLoginUserRemovedOTP(event)
+		} else if event.EventTypeID == 69 { // USER_REJECTED_BY_RADIUS
+			p.handleRejectedRadius(event)
 		} else {
 			p.API.LogInfo("Not implemented yet", "Event Type", event.EventTypeID)
 		}
@@ -160,8 +162,6 @@ func (p *Plugin) handleLoginPossibleThreat(event OneLogin) {
 func (p *Plugin) handleLoginUserCreation(event OneLogin) {
 	var fields []*model.SlackAttachmentField
 	fields = addFields(fields, "User Name", event.UserName, false)
-	fields = addFields(fields, "Login Name", event.LoginName, false)
-	fields = addFields(fields, "Notes", event.Notes, false)
 
 	title := fmt.Sprintf("%s was created by %s", event.UserName, event.ActorUserName)
 	attachment := &model.SlackAttachment{
@@ -220,8 +220,6 @@ func (p *Plugin) handleLoginUserDeactived(event OneLogin) {
 func (p *Plugin) handleLoginUserDeleted(event OneLogin) {
 	var fields []*model.SlackAttachmentField
 	fields = addFields(fields, "User Name", event.UserName, false)
-	fields = addFields(fields, "Login Name", event.LoginName, false)
-	fields = addFields(fields, "Notes", event.Notes, false)
 
 	title := fmt.Sprintf("%s was deleted by %s", event.UserName, event.ActorUserName)
 	attachment := &model.SlackAttachment{
@@ -318,6 +316,35 @@ func (p *Plugin) handleLoginUserRemovedOTP(event OneLogin) {
 		Title:  title,
 		Fields: fields,
 		Color:  "#FFA500",
+	}
+
+	post := &model.Post{
+		ChannelId: p.ChannelID,
+		UserId:    p.BotUserID,
+		Props: map[string]interface{}{
+			"from_webhook":      "true",
+			"override_username": ONELOGIN_USERNAME,
+			"override_icon_url": ONELOGIN_ICON_URL,
+		},
+	}
+
+	model.ParseSlackAttachment(post, []*model.SlackAttachment{attachment})
+	if _, appErr := p.API.CreatePost(post); appErr != nil {
+		return
+	}
+	return
+}
+
+func (p *Plugin) handleRejectedRadius(event OneLogin) {
+	var fields []*model.SlackAttachmentField
+	fields = addFields(fields, "Login Name", event.LoginName, true)
+	fields = addFields(fields, "IP Address", event.Ipaddr, true)
+
+	title := fmt.Sprintf("%s rejected by %s", event.ActorUserName, event.RadiusConfigName)
+	attachment := &model.SlackAttachment{
+		Title:  title,
+		Fields: fields,
+		Color:  "#008000",
 	}
 
 	post := &model.Post{
