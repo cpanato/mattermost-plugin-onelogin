@@ -337,14 +337,13 @@ func (p *Plugin) handleLoginUserRemovedOTP(event OneLogin) {
 
 func (p *Plugin) handleRejectedRadius(event OneLogin) {
 	var fields []*model.SlackAttachmentField
-	fields = addFields(fields, "Login Name", event.LoginName, true)
 	fields = addFields(fields, "IP Address", event.Ipaddr, true)
 
 	title := fmt.Sprintf("%s rejected by %s", event.ActorUserName, event.RadiusConfigName)
 	attachment := &model.SlackAttachment{
 		Title:  title,
 		Fields: fields,
-		Color:  "#008000",
+		Color:  "#ff0000",
 	}
 
 	post := &model.Post{
