@@ -2,7 +2,7 @@
     "id": "com.cpanato.onelogin",
     "name": "Onelogin Notifications",
     "description": "This plugin receives and post notifications from OneLogin webhook.",
-    "version": "0.0.5",
+    "version": "0.0.6",
     "server": {
         "executables": {
             "linux-amd64": "server/dist/plugin-linux-amd64",

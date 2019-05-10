@@ -96,21 +96,27 @@ func (p *Plugin) ServeHTTP(c *plugin.Context, w http.ResponseWriter, r *http.Req
 		risk, _ := strconv.Atoi(p.configuration.RiskThreshold)
 		if event.EventTypeID == 5 && event.RiskScore > risk { // USER_LOGGED_INTO_ONELOGIN
 			p.handleLoginPossibleThreat(event)
-		} else if event.EventTypeID == 12 { // UNLOCKED_USER
+		}
+		switch event.EventTypeID {
+		case 12: // UNLOCKED_USER
 			p.handleLoginUserUnlocked(event)
-		} else if event.EventTypeID == 13 { // CREATED_USER
+		case 13: // CREATED_USER
 			p.handleLoginUserCreation(event)
-		} else if event.EventTypeID == 15 { // DEACTIVATED_USER
+		case 15: // DEACTIVATED_USER
 			p.handleLoginUserDeactived(event)
-		} else if event.EventTypeID == 17 { // DELETED_USER
+		case 17: // DELETED_USER
 			p.handleLoginUserDeleted(event)
-		} else if event.EventTypeID == 19 { // USER_LOCKED
+		case 19: // USER_LOCKED
 			p.handleLoginUserLocked(event)
-		} else if event.EventTypeID == 24 { // USER_REMOVED_OTP_DEVICE
+		case 21: // SUSPENDED_USER
+			p.handleLoginUserSuspended(event)
+		case 24: // USER_REMOVED_OTP_DEVICE
 			p.handleLoginUserRemovedOTP(event)
-		} else if event.EventTypeID == 69 { // USER_REJECTED_BY_RADIUS
+		case 69: // USER_REJECTED_BY_RADIUS
 			p.handleRejectedRadius(event)
-		} else {
+		case 225: // USER_UNLICENSED_MANUALLY
+			p.handleLoginUserUnlicensed(event)
+		default:
 			p.API.LogInfo("Not implemented yet", "Event Type", event.EventTypeID)
 		}
 	}
@@ -194,6 +200,66 @@ func (p *Plugin) handleLoginUserDeactived(event OneLogin) {
 	fields = addFields(fields, "Notes", event.Notes, false)
 
 	title := fmt.Sprintf("%s was deactived by %s", event.UserName, event.ActorUserName)
+	attachment := &model.SlackAttachment{
+		Title:  title,
+		Fields: fields,
+		Color:  "#0000FF",
+	}
+
+	post := &model.Post{
+		ChannelId: p.ChannelID,
+		UserId:    p.BotUserID,
+		Props: map[string]interface{}{
+			"from_webhook":      "true",
+			"override_username": ONELOGIN_USERNAME,
+			"override_icon_url": ONELOGIN_ICON_URL,
+		},
+	}
+
+	model.ParseSlackAttachment(post, []*model.SlackAttachment{attachment})
+	if _, appErr := p.API.CreatePost(post); appErr != nil {
+		return
+	}
+	return
+}
+
+func (p *Plugin) handleLoginUserSuspended(event OneLogin) {
+	var fields []*model.SlackAttachmentField
+	fields = addFields(fields, "User Name", event.UserName, false)
+	fields = addFields(fields, "Login Name", event.LoginName, false)
+	fields = addFields(fields, "Notes", event.Notes, false)
+
+	title := fmt.Sprintf("%s suspended by by %s", event.UserName, event.ActorUserName)
+	attachment := &model.SlackAttachment{
+		Title:  title,
+		Fields: fields,
+		Color:  "#0000FF",
+	}
+
+	post := &model.Post{
+		ChannelId: p.ChannelID,
+		UserId:    p.BotUserID,
+		Props: map[string]interface{}{
+			"from_webhook":      "true",
+			"override_username": ONELOGIN_USERNAME,
+			"override_icon_url": ONELOGIN_ICON_URL,
+		},
+	}
+
+	model.ParseSlackAttachment(post, []*model.SlackAttachment{attachment})
+	if _, appErr := p.API.CreatePost(post); appErr != nil {
+		return
+	}
+	return
+}
+
+func (p *Plugin) handleLoginUserUnlicensed(event OneLogin) {
+	var fields []*model.SlackAttachmentField
+	fields = addFields(fields, "User Name", event.UserName, false)
+	fields = addFields(fields, "Login Name", event.LoginName, false)
+	fields = addFields(fields, "Notes", event.Notes, false)
+
+	title := fmt.Sprintf("%s removed license from %s", event.ActorUserName, event.UserName)
 	attachment := &model.SlackAttachment{
 		Title:  title,
 		Fields: fields,
